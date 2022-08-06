@@ -7,3 +7,5 @@ An API that connects users to hangout spots in their location. The application's
 - jwt authentication
 - Current user can add, edit and delete his/her added/created spot
 - Current user can add, edit and delete his/her comment on any spot
+- Filter Spots based on location
+- Admin authorization

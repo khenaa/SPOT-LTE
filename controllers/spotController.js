@@ -53,7 +53,9 @@ exports.getAllSpots = async (req, res) => {
 
 exports.getSpot = async (req, res) => {
   try {
-    const foundSpot = await Spot.findById(req.params.id);
+    const foundSpot = await (
+      await Spot.findById(req.params.id)
+    ).populate("comments");
     res.status(200).json({
       status: "success",
       data: {
@@ -77,7 +79,7 @@ exports.createSpot = async (req, res) => {
       address: req.body.address,
       state: req.body.state,
       websiteUrl: req.body.websiteUrl,
-      author: {
+      user: {
         name: req.user.name,
         id: req.user.id,
       },

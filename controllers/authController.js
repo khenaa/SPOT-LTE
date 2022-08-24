@@ -1,7 +1,8 @@
-const { promisify } = require("util");
-const jwt = require("jsonwebtoken");
-const User = require("../models/userModel");
-const Spot = require("../models/spotModel");
+const { promisify } = require('util');
+const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
+const Spot = require('../models/spotModel');
+const Comment = require('../models/commentModel');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -22,7 +23,7 @@ exports.signup = async (req, res) => {
     newUser.password = undefined;
 
     res.status(201).json({
-      status: "success",
+      status: 'success',
       token,
       data: {
         newUser,
@@ -30,7 +31,7 @@ exports.signup = async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({
-      status: "fail",
+      status: 'fail',
       message: err,
     });
   }
@@ -43,31 +44,31 @@ exports.login = async (req, res) => {
     // 2) Check if email & password exist in the input
     if (!email || !password) {
       return res.status(400).json({
-        status: "fail",
-        message: "Please enter email and password",
+        status: 'fail',
+        message: 'Please enter email and password',
       });
     }
     // 3a)Find user associated to email and...
-    const foundUser = await User.findOne({ email }).select("+password");
+    const foundUser = await User.findOne({ email }).select('+password');
     // 3b)Check if user exit & password is correct
     if (
       !foundUser ||
       !(await foundUser.correctPassword(password, foundUser.password))
     ) {
       return res.status(401).json({
-        status: "fail",
-        message: "Incorrect email or password",
+        status: 'fail',
+        message: 'Incorrect email or password',
       });
     }
     // 4) if no error, send token to client as response
     const token = signToken(foundUser.id);
     res.status(200).json({
-      status: "success",
+      status: 'success',
       token,
     });
   } catch (err) {
     res.status(400).json({
-      status: "fail",
+      status: 'fail',
       message: err,
     });
   }
@@ -79,15 +80,15 @@ exports.isAuthenticated = async (req, res, next) => {
     let token;
     if (
       req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
+      req.headers.authorization.startsWith('Bearer')
     ) {
-      token = req.headers.authorization.split(" ")[1];
+      token = req.headers.authorization.split(' ')[1];
     }
     // 2) Check if the token exist
     if (!token) {
       return res.status(401).json({
-        status: "fail",
-        message: "Can not access this route. Please login",
+        status: 'fail',
+        message: 'Can not access this route. Please login',
       });
     }
     //  3) Verify the token
@@ -101,8 +102,8 @@ exports.isAuthenticated = async (req, res, next) => {
     const currentUser = await User.findById(verifiedToken.id);
     if (!currentUser) {
       return res.status(401).json({
-        status: "error",
-        message: "The user belonging to this token no longer exist",
+        status: 'error',
+        message: 'The user belonging to this token no longer exist',
       });
     }
 
@@ -111,7 +112,7 @@ exports.isAuthenticated = async (req, res, next) => {
     next();
   } catch (err) {
     res.status(401).json({
-      status: "error",
+      status: 'error',
       message: err,
     });
   }
@@ -119,13 +120,13 @@ exports.isAuthenticated = async (req, res, next) => {
 
 exports.updatePassword = async (req, res) => {
   // 1) Get user
-  const user = await User.findById(req.user.id).select("+password");
+  const user = await User.findById(req.user.id).select('+password');
 
   // 2) Check if the inputed current password is correct
   if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
     return res.status(401).json({
-      status: "fail",
-      message: "Your current password is wrong",
+      status: 'fail',
+      message: 'Your current password is wrong',
     });
   }
   // 3) update password
@@ -136,17 +137,17 @@ exports.updatePassword = async (req, res) => {
   // 4) Login user, send jwt
   const token = signToken(user.id);
   res.status(200).json({
-    status: "success",
+    status: 'success',
     token,
   });
 };
 
 exports.restrictedTo = (role) => {
   return (req, res, next) => {
-    if (!role.includes(req.user.role)) {
+    if (role !== req.user.role) {
       return res.status(403).json({
-        status: "fail",
-        message: "You do not have permission to perform this action",
+        status: 'fail',
+        message: 'You do not have permission to perform this action',
       });
     }
     next();
@@ -154,19 +155,33 @@ exports.restrictedTo = (role) => {
 };
 
 exports.checkSpotOwnership = async (req, res, next) => {
-  // 1) find the spot
+  // 1) find  spot with id
   const spot = await Spot.findById(req.params.id);
 
   // 2) check if authenticated user owns the Spot
-  if (!spot.author.id.equals(req.user._id)) {
+  if (!spot.user.id.equals(req.user._id)) {
     return res.status(401).json({
-      status: "fail",
+      status: 'fail',
       message:
-        "This Spot does not belong to you. You are not authorize to perform this action",
+        'This Spot does not belong to you. You are not authorize to perform this action',
     });
   }
 
-  // console.log(spot.author.id, req.user.id);
+  next();
+};
+
+exports.checkCommentOwnership = async (req, res, next) => {
+  // 1) Find comment with id
+  const comment = await Comment.findById(req.params.id);
+
+  // 2) Check if authenticated user is owner of comment
+  if (!comment.user._id.equals(req.user._id)) {
+    return res.status(401).json({
+      status: 'fail',
+      message:
+        'This comment does not belong to you. You are not authorized to perform this action',
+    });
+  }
 
   next();
 };

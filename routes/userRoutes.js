@@ -1,49 +1,50 @@
-const express = require("express");
-const userController = require("../controllers/userController");
-const authController = require("../controllers/authController");
+const express = require('express');
+const userController = require('../controllers/userController');
+const authController = require('../controllers/authController');
 
 const router = express.Router();
 
-router.post("/signup", authController.signup);
-router.post("/login", authController.login);
+router.post('/signup', authController.signup);
+router.post('/login', authController.login);
+
 router.patch(
-  "/updateMyPassword",
+  '/updateMyPassword',
   authController.isAuthenticated,
   authController.updatePassword
 );
 
 router.patch(
-  "/updateMe",
+  '/updateMe',
   authController.isAuthenticated,
   userController.updateMe
 );
 
 router.delete(
-  "/deleteMe",
+  '/deleteMe',
   authController.isAuthenticated,
   userController.deleteMe
 );
 
 router
-  .route("/")
+  .route('/')
   .get(userController.getAllUsers)
   .post(
     authController.isAuthenticated,
-    authController.restrictedTo("admin"),
+    authController.restrictedTo('admin'),
     userController.createUser
   );
 
 router
-  .route("/:id")
+  .route('/:id')
   .get(userController.getUser)
   .patch(
     authController.isAuthenticated,
-    authController.restrictedTo("admin"),
+    authController.restrictedTo('admin'),
     userController.updateUser
   )
   .delete(
     authController.isAuthenticated,
-    authController.restrictedTo("admin"),
+    authController.restrictedTo('admin'),
     userController.deleteUser
   );
 

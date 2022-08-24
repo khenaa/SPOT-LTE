@@ -16,6 +16,6 @@ const commentRouter = require("./routes/commentRoutes");
 
 app.use("/api/v1/spots", spotRouter);
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/spots", commentRouter);
+app.use("/api/v1/comments", commentRouter);
 
 module.exports = app;

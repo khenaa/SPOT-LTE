@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const spotController = require("../controllers/spotController");
 const authController = require("../controllers/authController");
+const commentRouter = require("../routes/commentRoutes");
+
+router.use("/:spotId/comments", commentRouter);
 
 router
   .route("/")
